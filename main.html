@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>단어 암기</title>
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div class="title">
+        <h1 class="dv">Daily Vocabulary</h1>
+        <button id="go-memorize"> 단어 복습 <br> Click!</button>
+    </div>
+    
+    <div id="word-memorize">
+        <input type="text" class="memorize-input" id="word-input" placeholder="단어 입력">
+        <input type="text" class="memorize-input" id="meaning-input" placeholder="뜻 입력">
+        <button id="add-word">단어 추가</button>
+    </div>
+   
+    <div id="word-list"></div>
+    <p class="hidden">
+        * 가려서 외우고 싶은 것을 선택해주세요 *
+        <br>
+        <button id="hide_word">word</button>
+        <button id="hide_meaning">meaning</button> 
+    </p>
+    <button class="btn">오늘의 영어표현</button>
+    <div id="pocket"></div>
+    
+    <script>
+        const words = [];
+        const addButton = document.getElementById('add-word');
+        const wordlist = document.getElementById('word-list');
+        const hidewordbutton = document.getElementById('hide_word');
+        const hidemeaningbutton = document.getElementById('hide_meaning');
+        const goMemorizeButton = document.getElementById('go-memorize');
+
+        let wordhidden = false;
+        let meaninghidden = false;
+
+        addButton.addEventListener('click', () => {
+            const wordInput = document.getElementById('word-input');
+            const meaningInput = document.getElementById('meaning-input');
+            const word = wordInput.value;
+            const meaning = meaningInput.value;
+
+            if (!word || !meaning) {
+                alert("모든 칸을 채워주세요!!!!");
+                return;
+            }
+
+            localStorage.setItem(word, meaning);
+
+            words.push({ word, meaning });
+            updateWordList();
+
+            wordInput.value = '';
+            meaningInput.value = '';
+        });
+
+        hidewordbutton.addEventListener('click', () => {
+            if (wordhidden == true){
+                wordhidden = false;
+            }
+            else{
+                wordhidden = true;
+            }
+            updateWordList();
+        });
+
+        hidemeaningbutton.addEventListener('click', () => {
+           if (meaninghidden == true){
+                meaninghidden = false;
+           }
+           else{
+            meaninghidden = true;
+           }
+            updateWordList();
+        });
+
+        function updateWordList() {
+            wordlist.innerHTML = '';
+
+            words.forEach(word => {
+                const wordItem = document.createElement('div');
+                let wordText = word.word;
+                let meaningText = word.meaning;
+
+                if (wordhidden) {
+                    wordText = '****';
+                }
+
+                if (meaninghidden) {
+                    meaningText = '****';
+                }
+
+                wordItem.textContent = `${wordText} : ${meaningText}`;
+                wordlist.appendChild(wordItem);
+            });
+        }
+
+        goMemorizeButton.addEventListener('click', () => {
+    const storageword = Object.keys(localStorage);
+    if (storageword.length === 0) {
+        alert("저장된 단어가 없습니다.. \n외울 단어를 입력해주세요~");
+        return;
+    }
+
+    while (true) {
+        const randomIndex = Math.floor(Math.random() * storageword.length);
+        const randomWord = storageword[randomIndex];
+        const correctAnswer = localStorage.getItem(randomWord); 
+
+        let count = 0;
+        let userAnswer = prompt(`${randomWord}의 뜻은?? `);
+
+        while (userAnswer !== correctAnswer) {
+            count++;
+            alert(`틀렸습니다! 다시 입력해주세요 \n 남은 기회: ${3 - count}번`);
+            userAnswer = prompt(`${randomWord}의 뜻을 다시 입력해주세요:`);
+
+            if (count == 3) {
+                alert(`뜻은 "${correctAnswer}"입니다. 다시 외우세요!`);
+                break;
+            }
+        }
+
+        if (userAnswer === correctAnswer) {
+            alert("정답입니다!");
+        }
+
+        let continueGame = confirm("계속하시겠습니까?");
+        if (!continueGame) {
+            break;
+        }
+    }
+});
+document.querySelector('.btn').onclick = function () {
+    fetch('word.json')
+        .then(response => response.json())
+        .then(result => {
+            const words = result;
+
+            const randomWords = [];
+            for (let i = 0; i < 3; i++) {
+                const randomIndex = Math.floor(Math.random() * words.length); 
+                randomWords.push(words[randomIndex]); 
+            }
+
+            let listGroup = [];
+            randomWords.forEach(function (item) {
+                listGroup.push(`
+                    
+                    <li class="word-item">
+                        <span class="word">${item.word}</span> 
+                        <span class="meaning">${item.meaning}</span>
+                    </li>
+                   
+                `);
+            });
+            let newUI = `<ul class="word-list">${listGroup.join('')}</ul>`;
+            document.querySelector('#pocket').innerHTML = newUI;
+        })
+        .catch(error => {
+            console.error('JSON 파일 로드 실패', error);
+        });
+};
+
+    </script>
+</body>
+</html>
